@@ -1,10 +1,8 @@
 import { PrismaClient } from '@/generated/prisma';
 
-// PrismaClient is attached to the `global` object in development to prevent
-// exhausting your database connection limit.
-//
-// Learn more:
-// https://pris.ly/d/help/next-js-best-practices
+/* This file implements the Prisma client singleton pattern to prevent multiple database connections during development. 
+It properly configures the Prisma client with appropriate logging levels based on the environment.
+This is a critical infrastructure file that ensures efficient database access throughout the application. */
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
