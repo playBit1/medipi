@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import usePatients from '@/hooks/usePatients';
 import { PatientWithDispenser } from '@/types/patient';
 
 export default function PatientsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const assignToDispenserId = searchParams.get('assignTo');
+
   const {
     patients,
     totalCount,
     currentPage,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    pageSize,
     totalPages,
     loading,
     error,
@@ -26,6 +29,56 @@ export default function PatientsPage() {
     patientId: string;
     patientName: string;
   }>({ show: false, patientId: '', patientName: '' });
+
+  // New state for assignment operations
+  const [assignmentStatus, setAssignmentStatus] = useState<{
+    loading: boolean;
+    success: boolean;
+    error: string | null;
+  }>({
+    loading: false,
+    success: false,
+    error: null,
+  });
+
+  // New state to track dispenser details (if in assignment mode)
+  const [dispenserDetails, setDispenserDetails] = useState<{
+    id: string;
+    serialNumber: string;
+  } | null>(null);
+
+  // Fetch dispenser details if in assignment mode
+  useEffect(() => {
+    const fetchDispenserDetails = async () => {
+      if (!assignToDispenserId) return;
+
+      try {
+        const response = await fetch(`/api/dispensers/${assignToDispenserId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch dispenser details');
+        }
+
+        const data = await response.json();
+        setDispenserDetails({
+          id: data.id,
+          serialNumber: data.serialNumber,
+        });
+
+        // If dispenser already has a patient, redirect back with a warning
+        if (data.patient) {
+          router.push(
+            `/dispensers/${assignToDispenserId}?error=already_assigned`
+          );
+        }
+      } catch (err) {
+        console.error('Error fetching dispenser:', err);
+      }
+    };
+
+    if (assignToDispenserId) {
+      fetchDispenserDetails();
+    }
+  }, [assignToDispenserId, router]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +105,53 @@ export default function PatientsPage() {
 
   const cancelDelete = () => {
     setDeleteConfirmation({ show: false, patientId: '', patientName: '' });
+  };
+
+  // New function to handle patient assignment
+  const handleAssignPatient = async (patientId: string) => {
+    if (!assignToDispenserId) return;
+
+    setAssignmentStatus({
+      loading: true,
+      success: false,
+      error: null,
+    });
+
+    try {
+      const response = await fetch(
+        `/api/dispensers/${assignToDispenserId}/patient`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ patientId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to assign patient');
+      }
+
+      setAssignmentStatus({
+        loading: false,
+        success: true,
+        error: null,
+      });
+
+      // Delay a bit to show success message
+      setTimeout(() => {
+        router.push(`/dispensers/${assignToDispenserId}`);
+      }, 1000);
+    } catch (err) {
+      console.error('Error assigning patient:', err);
+      setAssignmentStatus({
+        loading: false,
+        success: false,
+        error: err instanceof Error ? err.message : 'Failed to assign patient',
+      });
+    }
   };
 
   const formatDate = (dateString: string | Date) => {
@@ -81,13 +181,89 @@ export default function PatientsPage() {
   return (
     <div className='space-y-6'>
       <div className='flex justify-between items-center'>
-        <h1 className='text-2xl font-bold'>Patients</h1>
-        <Link
-          href='/patients/new'
-          className='btn btn-primary'>
-          Add Patient
-        </Link>
+        <h1 className='text-2xl font-bold'>
+          {assignToDispenserId && dispenserDetails
+            ? `Assign Patient to Dispenser ${dispenserDetails.serialNumber}`
+            : 'Patients'}
+        </h1>
+        {!assignToDispenserId && (
+          <Link
+            href='/patients/new'
+            className='btn btn-primary'>
+            Add Patient
+          </Link>
+        )}
+        {assignToDispenserId && (
+          <Link
+            href={`/dispensers/${assignToDispenserId}`}
+            className='btn btn-outline'>
+            Cancel
+          </Link>
+        )}
       </div>
+
+      {/* Assignment mode info banner */}
+      {assignToDispenserId && dispenserDetails && (
+        <div className='alert alert-info'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            fill='none'
+            viewBox='0 0 24 24'
+            className='stroke-info shrink-0 w-6 h-6'>
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth='2'
+              d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'></path>
+          </svg>
+          <div>
+            <h3 className='font-bold'>Assignment Mode</h3>
+            <div className='text-xs'>
+              {
+                'Click on "Assign" next to a patient to assign them to dispenser'
+              }
+              {dispenserDetails.serialNumber}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment status */}
+      {assignmentStatus.error && (
+        <div className='alert alert-error'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            className='stroke-current shrink-0 h-6 w-6'
+            fill='none'
+            viewBox='0 0 24 24'>
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth='2'
+              d='M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'
+            />
+          </svg>
+          <span>{assignmentStatus.error}</span>
+        </div>
+      )}
+
+      {assignmentStatus.success && (
+        <div className='alert alert-success'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            className='stroke-current shrink-0 h-6 w-6'
+            fill='none'
+            viewBox='0 0 24 24'>
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth='2'
+              d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+            />
+          </svg>
+          <span>Patient successfully assigned! Redirecting...</span>
+        </div>
+      )}
 
       {/* Search and filters */}
       <div className='card bg-base-200 shadow-xl'>
@@ -141,7 +317,7 @@ export default function PatientsPage() {
       )}
 
       {/* Loading state */}
-      {loading ? (
+      {loading || assignmentStatus.loading ? (
         <div className='flex flex-col gap-4'>
           {[...Array(5)].map((_, i) => (
             <div
@@ -164,7 +340,7 @@ export default function PatientsPage() {
                   <th>Name</th>
                   <th>Date of Birth</th>
                   <th>Room Number</th>
-                  <th>Dispenser</th>
+                  <th>Current Dispenser</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -192,7 +368,11 @@ export default function PatientsPage() {
                       <td>
                         {patient.dispenser ? (
                           <div className='flex flex-col gap-1'>
-                            <div>{patient.dispenser.serialNumber}</div>
+                            <Link
+                              href={`/dispensers/${patient.dispenser.id}`}
+                              className='link link-primary'>
+                              {patient.dispenser.serialNumber}
+                            </Link>
                             <div
                               className={`badge ${getDispenserStatusClass(
                                 patient.dispenser.status
@@ -206,17 +386,32 @@ export default function PatientsPage() {
                       </td>
                       <td>
                         <div className='flex space-x-2'>
-                          <Link
-                            href={`/patients/${patient.id}/edit`}
-                            className='btn btn-sm btn-outline'>
-                            Edit
-                          </Link>
-                          <button
-                            onClick={() => confirmDelete(patient)}
-                            className='btn btn-sm btn-error btn-outline'
-                            disabled={!!patient.dispenser}>
-                            Delete
-                          </button>
+                          {assignToDispenserId ? (
+                            // Show assign button in assignment mode
+                            <button
+                              onClick={() => handleAssignPatient(patient.id)}
+                              className='btn btn-sm btn-primary'
+                              disabled={!!patient.dispenser}>
+                              {!!patient.dispenser
+                                ? 'Already Assigned'
+                                : 'Assign'}
+                            </button>
+                          ) : (
+                            // Show regular actions outside assignment mode
+                            <>
+                              <Link
+                                href={`/patients/${patient.id}/edit`}
+                                className='btn btn-sm btn-outline'>
+                                Edit
+                              </Link>
+                              <button
+                                onClick={() => confirmDelete(patient)}
+                                className='btn btn-sm btn-error btn-outline'
+                                disabled={!!patient.dispenser}>
+                                Delete
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

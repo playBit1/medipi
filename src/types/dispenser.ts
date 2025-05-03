@@ -1,3 +1,5 @@
+// src/types/dispenser.ts
+
 export enum DispenserStatus {
   ONLINE = 'ONLINE',
   OFFLINE = 'OFFLINE',
@@ -6,12 +8,25 @@ export enum DispenserStatus {
   OFFLINE_AUTONOMOUS = 'OFFLINE_AUTONOMOUS',
 }
 
+export enum RfidType {
+  PATIENT = 'PATIENT',
+  ADMIN = 'ADMIN',
+}
+
+export enum DispensingStatus {
+  COMPLETED = 'COMPLETED',
+  MISSED = 'MISSED',
+  LATE = 'LATE',
+  ERROR = 'ERROR',
+}
+
 export type Dispenser = {
   id: string;
   serialNumber: string;
   status: DispenserStatus;
   lastSeen: Date | string | null;
   patientId: string | null;
+  lastSyncedAt: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -23,19 +38,64 @@ export type DispenserWithPatient = Dispenser & {
   } | null;
 };
 
+export type Chamber = {
+  id: string;
+  dispenserId: string;
+  chamberNumber: number;
+};
+
+export type Schedule = {
+  id: string;
+  time: number;
+  startDate: Date | string;
+  endDate: Date | string | null;
+  isActive: boolean;
+  patientId: string;
+  dispenserId: string;
+};
+
+export type DispenserRfid = {
+  id: string;
+  dispenserId: string;
+  rfidTag: string;
+  type: RfidType;
+};
+
+export type DispenserLog = {
+  id: string;
+  dispenserId: string;
+  scheduleId: string;
+  timestamp: Date | string;
+  status: DispensingStatus;
+  medications: string; // JSON string of dispensed medications
+  synced: boolean;
+  createdAt: Date | string;
+  schedule: {
+    time: number;
+  };
+};
+
 export type DispenserDetails = DispenserWithPatient & {
-  chambers: {
-    id: string;
-    chamberNumber: number;
-  }[];
+  chambers: Chamber[];
   schedules: {
     id: string;
     time: number;
     isActive: boolean;
+    startDate: Date | string;
+    endDate: Date | string | null;
   }[];
   rfids: {
     id: string;
     rfidTag: string;
-    type: 'PATIENT' | 'ADMIN';
+    type: RfidType;
   }[];
+  dispenserLogs: DispenserLog[];
 };
+
+export type DispenserFormData = {
+  serialNumber: string;
+  status: DispenserStatus;
+};
+
+// Type for filtering dispensers
+export type DispenserFilterStatus = 'all' | 'assigned' | 'unassigned';
