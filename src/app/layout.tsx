@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import NextAuthProvider from '@/components/providers/NextAuthProvider';
+import MqttProvider from '@/components/providers/MqttProvider';
 
 export const metadata: Metadata = {
   title: 'MediPi - Automated Medication Dispenser',
@@ -18,7 +19,9 @@ export default function RootLayout({
       lang='en'
       data-theme='dark'>
       <body>
-        <NextAuthProvider>{children}</NextAuthProvider>
+        <NextAuthProvider>
+          <MqttProvider>{children}</MqttProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );
