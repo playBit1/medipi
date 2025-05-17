@@ -1,16 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// src/app/(dashboard)/dispensers/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import DispenserStatusBadge from '@/components/dispensers/DispenserStatusBadge';
 import { DispenserDetails, DispensingStatus } from '@/types/dispenser';
+import { useNodeRed } from '@/components/providers/NodeRedProvider';
 
 export default function DispenserDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dispenserId = params.id as string;
 
+  // State for database dispenser data
   const [dispenser, setDispenser] = useState<DispenserDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,15 +21,38 @@ export default function DispenserDetailPage() {
     'general' | 'patient' | 'schedules' | 'logs'
   >('general');
 
+  // State for Node-RED integration
+  const { dispensers: liveDispensers, isLoading: nodeRedLoading } =
+    useNodeRed();
+  const [liveDispenser, setLiveDispenser] = useState<any>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
   // Modal states
   const [modalState, setModalState] = useState<{
     type: 'delete' | 'unassign' | null;
     isOpen: boolean;
   }>({ type: null, isOpen: false });
 
+  // Fetch dispenser data from database
   useEffect(() => {
     fetchDispenserData();
   }, [dispenserId]);
+
+  // Find and update live dispenser data when liveDispensers changes
+  useEffect(() => {
+    if (dispenser && liveDispensers && liveDispensers.length > 0) {
+      // Find the matching live dispenser by serial number
+      const matchingDispenser = liveDispensers.find(
+        (d) =>
+          d.serialNumber === dispenser.serialNumber ||
+          d.id === dispenser.serialNumber
+      );
+
+      if (matchingDispenser) {
+        setLiveDispenser(matchingDispenser);
+      }
+    }
+  }, [liveDispensers, dispenser]);
 
   const fetchDispenserData = async () => {
     try {
@@ -45,6 +71,47 @@ export default function DispenserDetailPage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // New function to sync schedules with the physical dispenser via Node-RED
+  const syncSchedules = async () => {
+    if (!dispenser) return;
+
+    try {
+      setIsSyncing(true);
+
+      // Get the schedules from the dispenser object
+      const schedules = dispenser.schedules.map((schedule) => ({
+        id: schedule.id,
+        time: schedule.time,
+        startDate: schedule.startDate,
+        endDate: schedule.endDate,
+        isActive: schedule.isActive,
+        // Include any other necessary schedule data
+        patientName: dispenser.patient?.name || 'Unknown Patient',
+        patientId: dispenser.patient?.id || '',
+        // Add medication info if available
+        // This would need to be expanded based on your data structure
+      }));
+
+      // Use the nodeRedService directly for more control
+      const { nodeRedService } = await import('@/lib/nodeRed');
+
+      // Send schedules to the dispenser
+      const result = await nodeRedService.sendSchedules(
+        dispenser.serialNumber,
+        schedules
+      );
+
+      console.log('Schedules synced successfully:', result);
+
+      // You could show a success notification here
+    } catch (err) {
+      console.error('Failed to sync schedules:', err);
+      setError(err instanceof Error ? err.message : 'Failed to sync schedules');
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -106,6 +173,36 @@ export default function DispenserDetailPage() {
     return `${hour}:00`;
   };
 
+  // Calculate connection status
+  const getConnectionStatus = () => {
+    if (!liveDispenser) return { status: 'Unknown', class: 'badge-warning' };
+
+    const status = liveDispenser.status || 'UNKNOWN';
+    let statusClass = 'badge-warning';
+
+    switch (status) {
+      case 'ONLINE':
+        statusClass = 'badge-success';
+        break;
+      case 'OFFLINE':
+        statusClass = 'badge-warning';
+        break;
+      case 'ERROR':
+        statusClass = 'badge-error';
+        break;
+      case 'MAINTENANCE':
+        statusClass = 'badge-info';
+        break;
+      case 'OFFLINE_AUTONOMOUS':
+        statusClass = 'badge-primary';
+        break;
+    }
+
+    return { status, class: statusClass };
+  };
+
+  const connectionStatus = getConnectionStatus();
+
   if (loading) {
     return (
       <div className='flex justify-center items-center h-64'>
@@ -154,10 +251,24 @@ export default function DispenserDetailPage() {
             Dispenser: {dispenser.serialNumber}
           </h1>
           <div className='flex items-center gap-2 mt-1'>
-            <DispenserStatusBadge status={dispenser.status} />
-            <span className='text-sm opacity-70'>
-              Last seen: {formatDate(dispenser.lastSeen)}
-            </span>
+            {/* Live connection status from Node-RED */}
+            {liveDispenser && (
+              <>
+                <span className={`badge ${connectionStatus.class}`}>
+                  {connectionStatus.status}
+                </span>
+                <span className='text-sm opacity-70'>
+                  Last seen:{' '}
+                  {formatDate(
+                    liveDispenser.lastSeen || liveDispenser.lastUpdate
+                  )}
+                </span>
+              </>
+            )}
+
+            {!liveDispenser && !nodeRedLoading && (
+              <span className='badge badge-warning'>Not connected</span>
+            )}
           </div>
         </div>
         <div className='flex gap-2'>
@@ -228,29 +339,8 @@ export default function DispenserDetailPage() {
                     readOnly
                   />
                 </div>
-                <div className='form-control'>
-                  <label className='label'>
-                    <span className='label-text font-semibold'>Status</span>
-                  </label>
-                  <div className='input input-bordered flex items-center'>
-                    <DispenserStatusBadge status={dispenser.status} />
-                  </div>
-                </div>
               </div>
               <div className='space-y-4'>
-                <div className='form-control'>
-                  <label className='label'>
-                    <span className='label-text font-semibold'>
-                      Chamber Count
-                    </span>
-                  </label>
-                  <input
-                    type='text'
-                    value={dispenser.chambers.length}
-                    className='input input-bordered'
-                    readOnly
-                  />
-                </div>
                 <div className='form-control'>
                   <label className='label'>
                     <span className='label-text font-semibold'>Created</span>
@@ -264,6 +354,30 @@ export default function DispenserDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Live Node-RED information */}
+            {liveDispenser && (
+              <>
+                <div className='card bg-base-100 shadow-sm'>
+                  <div className='card-body'>
+                    <h3 className='font-semibold'>Connection Details</h3>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div>
+                        <span className='font-semibold'>IP Address:</span>
+                        <p>{liveDispenser.ipAddress || 'Unknown'}</p>
+                      </div>
+
+                      {liveDispenser.model && (
+                        <div>
+                          <span className='font-semibold'>Model:</span>
+                          <p>{liveDispenser.model}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className='form-control'>
               <label className='label'>
@@ -385,13 +499,32 @@ export default function DispenserDetailPage() {
           <div className='space-y-6'>
             <div className='flex justify-between items-center'>
               <h2 className='text-xl font-semibold'>Medication Schedules</h2>
-              {dispenser.patient && (
-                <Link
-                  href={`/dispensers/${dispenserId}/schedules/new`}
-                  className='btn btn-primary btn-sm'>
-                  Add Schedule
-                </Link>
-              )}
+              <div className='flex gap-2'>
+                {/* Sync schedules button */}
+                {liveDispenser && dispenser.schedules.length > 0 && (
+                  <button
+                    onClick={syncSchedules}
+                    className='btn btn-secondary btn-sm'
+                    disabled={isSyncing || !liveDispenser}>
+                    {isSyncing ? (
+                      <>
+                        <span className='loading loading-spinner loading-xs'></span>
+                        Syncing...
+                      </>
+                    ) : (
+                      'Sync Schedules'
+                    )}
+                  </button>
+                )}
+
+                {dispenser.patient && (
+                  <Link
+                    href={`/dispensers/${dispenserId}/schedules/new`}
+                    className='btn btn-primary btn-sm'>
+                    Add Schedule
+                  </Link>
+                )}
+              </div>
             </div>
 
             {dispenser.schedules.length > 0 ? (

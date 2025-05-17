@@ -1,25 +1,31 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// src/app/(dashboard)/dispensers/page.tsx
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
 import useDispensers from '@/hooks/useDispensers';
 import DispenserStatusBadge from '@/components/dispensers/DispenserStatusBadge';
 import { DispenserFilterStatus, DispenserWithPatient } from '@/types/dispenser';
+import { useNodeRed } from '@/components/providers/NodeRedProvider';
 
 export default function DispensersPage() {
   const {
-    dispensers,
+    dispensers: dbDispensers,
     totalCount,
     currentPage,
     pageSize,
     totalPages,
-    loading,
-    error,
+    loading: dbLoading,
+    error: dbError,
     setPage,
     setPageSize,
     setSearch,
     setStatusFilter,
     deleteDispenser,
   } = useDispensers();
+
+  // Get live dispenser data from Node-RED
+  const { dispensers: liveDispensers, isLoading: liveLoading } = useNodeRed();
 
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilterLocal] =
@@ -29,6 +35,27 @@ export default function DispensersPage() {
     dispenserId: string;
     serialNumber: string;
   }>({ show: false, dispenserId: '', serialNumber: '' });
+
+  // Combine database dispensers with live status info
+  const enhancedDispensers = dbDispensers.map((dispenser) => {
+    // Find matching live dispenser by serial number
+    const liveDispenser = liveDispensers.find(
+      (live) =>
+        live.serialNumber === dispenser.serialNumber ||
+        live.id === dispenser.serialNumber
+    );
+
+    // Return enhanced dispenser with live data when available
+    return {
+      ...dispenser,
+      liveStatus: liveDispenser?.status || null,
+      lastSeen:
+        liveDispenser?.lastSeen ||
+        liveDispenser?.lastUpdate ||
+        dispenser.lastSeen,
+      isOnline: !!liveDispenser && liveDispenser.status === 'ONLINE',
+    };
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +167,7 @@ export default function DispensersPage() {
       </div>
 
       {/* Error state */}
-      {error && (
+      {dbError && (
         <div className='alert alert-error'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -155,7 +182,7 @@ export default function DispensersPage() {
             />
           </svg>
           <div>
-            <span className='font-bold'>Error:</span> {error}
+            <span className='font-bold'>Error:</span> {dbError}
             <div className='text-sm mt-1'>
               Try refreshing the page or contact support if the issue persists.
             </div>
@@ -169,7 +196,7 @@ export default function DispensersPage() {
       )}
 
       {/* Loading state */}
-      {loading ? (
+      {dbLoading ? (
         <div className='flex flex-col gap-4'>
           {[...Array(5)].map((_, i) => (
             <div
@@ -182,7 +209,12 @@ export default function DispensersPage() {
           {/* Results summary */}
           <div className='flex justify-between items-center text-sm'>
             <div>
-              Showing {dispensers.length} of {totalCount} dispensers
+              Showing {enhancedDispensers.length} of {totalCount} dispensers
+              {!liveLoading && (
+                <span className='ml-2 badge badge-sm badge-info'>
+                  {liveDispensers.length} online
+                </span>
+              )}
             </div>
             <div className='flex items-center gap-2'>
               <span>Items per page:</span>
@@ -211,7 +243,7 @@ export default function DispensersPage() {
                 </tr>
               </thead>
               <tbody>
-                {dispensers.length === 0 ? (
+                {enhancedDispensers.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
@@ -220,7 +252,7 @@ export default function DispensersPage() {
                     </td>
                   </tr>
                 ) : (
-                  dispensers.map((dispenser) => (
+                  enhancedDispensers.map((dispenser) => (
                     <tr key={dispenser.id}>
                       <td>
                         <Link
@@ -230,14 +262,22 @@ export default function DispensersPage() {
                         </Link>
                       </td>
                       <td>
-                        <DispenserStatusBadge status={dispenser.status} />
+                        <div className='flex flex-col gap-1'>
+                          <DispenserStatusBadge
+                            status={
+                              dispenser.liveStatus
+                                ? dispenser.liveStatus
+                                : dispenser.status
+                            }
+                          />
+                        </div>
                       </td>
                       <td>{formatDate(dispenser.lastSeen)}</td>
                       <td>
                         {dispenser.patient ? (
                           <Link
                             href={`/patients/${dispenser.patient.id}`}
-                            className='link link-primary'>
+                            className='link link-hover link-primary'>
                             {dispenser.patient.name}
                           </Link>
                         ) : (
@@ -246,6 +286,11 @@ export default function DispensersPage() {
                       </td>
                       <td>
                         <div className='flex space-x-2'>
+                          <Link
+                            href={`/dispensers/${dispenser.id}`}
+                            className='btn btn-sm btn-outline'>
+                            View
+                          </Link>
                           <Link
                             href={`/dispensers/${dispenser.id}/edit`}
                             className='btn btn-sm btn-outline'>
