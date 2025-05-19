@@ -175,41 +175,48 @@ export default function NewDispenserPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {discoveredDispensers.map((dispenser) => (
-                    <tr
-                      key={dispenser.id || dispenser.serialNumber}
-                      className={`cursor-pointer hover:bg-base-300 ${
-                        selectedDispenser?.serialNumber ===
-                        (dispenser.serialNumber || dispenser.id)
-                          ? 'bg-primary bg-opacity-20'
-                          : ''
-                      }`}
-                      onClick={() => handleSelectDispenser(dispenser)}>
-                      <td>
-                        <input
-                          type='radio'
-                          name='selected-dispenser'
-                          className='radio radio-primary'
-                          checked={
-                            selectedDispenser?.serialNumber ===
-                            (dispenser.serialNumber || dispenser.id)
-                          }
-                          onChange={() => handleSelectDispenser(dispenser)}
-                        />
-                      </td>
-                      <td>{dispenser.serialNumber || dispenser.id}</td>
-                      <td>{dispenser.ipAddress || 'Unknown'}</td>
-                      <td>
-                        <DispenserStatusBadge
-                          status={dispenser.status || 'OFFLINE'}
-                        />
-                      </td>
-                      <td>
-                        {formatDate(dispenser.lastSeen || dispenser.lastUpdate)}
-                      </td>
-                      <td>{dispenser.version || 'Unknown'}</td>
-                    </tr>
-                  ))}
+                  {discoveredDispensers
+                    .filter(
+                      (dispenser) =>
+                        (dispenser.status || 'OFFLINE') === 'ONLINE'
+                    )
+                    .map((dispenser) => (
+                      <tr
+                        key={dispenser.id || dispenser.serialNumber}
+                        className={`cursor-pointer hover:bg-base-300 ${
+                          selectedDispenser?.serialNumber ===
+                          (dispenser.serialNumber || dispenser.id)
+                            ? 'bg-primary bg-opacity-20'
+                            : ''
+                        }`}
+                        onClick={() => handleSelectDispenser(dispenser)}>
+                        <td>
+                          <input
+                            type='radio'
+                            name='selected-dispenser'
+                            className='radio radio-primary'
+                            checked={
+                              selectedDispenser?.serialNumber ===
+                              (dispenser.serialNumber || dispenser.id)
+                            }
+                            onChange={() => handleSelectDispenser(dispenser)}
+                          />
+                        </td>
+                        <td>{dispenser.serialNumber || dispenser.id}</td>
+                        <td>{dispenser.ipAddress || 'Unknown'}</td>
+                        <td>
+                          <DispenserStatusBadge
+                            status={dispenser.status || 'OFFLINE'}
+                          />
+                        </td>
+                        <td>
+                          {formatDate(
+                            dispenser.lastSeen || dispenser.lastUpdate
+                          )}
+                        </td>
+                        <td>{dispenser.version || 'Unknown'}</td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>

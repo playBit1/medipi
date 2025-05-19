@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/(dashboard)/dispensers/page.tsx
 'use client';
 import { useState } from 'react';
@@ -13,19 +12,17 @@ export default function DispensersPage() {
     dispensers: dbDispensers,
     totalCount,
     currentPage,
-    pageSize,
     totalPages,
     loading: dbLoading,
     error: dbError,
     setPage,
-    setPageSize,
     setSearch,
     setStatusFilter,
     deleteDispenser,
   } = useDispensers();
 
   // Get live dispenser data from Node-RED
-  const { dispensers: liveDispensers, isLoading: liveLoading } = useNodeRed();
+  const { dispensers: liveDispensers } = useNodeRed();
 
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilterLocal] =
@@ -92,11 +89,6 @@ export default function DispensersPage() {
 
   const cancelDelete = () => {
     setDeleteConfirmation({ show: false, dispenserId: '', serialNumber: '' });
-  };
-
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setPageSize(parseInt(e.target.value));
-    setPage(1); // Reset to first page when changing page size
   };
 
   const formatDate = (dateString: string | Date | null) => {
@@ -210,23 +202,6 @@ export default function DispensersPage() {
           <div className='flex justify-between items-center text-sm'>
             <div>
               Showing {enhancedDispensers.length} of {totalCount} dispensers
-              {!liveLoading && (
-                <span className='ml-2 badge badge-sm badge-info'>
-                  {liveDispensers.length} online
-                </span>
-              )}
-            </div>
-            <div className='flex items-center gap-2'>
-              <span>Items per page:</span>
-              <select
-                className='select select-bordered select-sm'
-                value={pageSize}
-                onChange={handlePageSizeChange}>
-                <option value='5'>5</option>
-                <option value='10'>10</option>
-                <option value='20'>20</option>
-                <option value='50'>50</option>
-              </select>
             </div>
           </div>
 

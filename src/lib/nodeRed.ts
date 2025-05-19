@@ -85,35 +85,6 @@ export class NodeRedService {
   }
 
   /**
-   * Sync schedules with the dispenser
-   * @param dispenserId Dispenser ID/serial number
-   * @param schedules Array of schedule objects
-   * @returns Promise with response data
-   */
-  async syncSchedules(dispenserId: string, schedules: any[]): Promise<any> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/api/dispensers/${dispenserId}/schedules`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(schedules),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.text().catch(() => 'Unknown error');
-        throw new Error(`Failed to sync schedules: ${error}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Schedule sync error:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Get logs with optional pagination
    * @param page Page number (default: 1)
    * @param pageSize Items per page (default: 10)
@@ -230,6 +201,29 @@ export class NodeRedService {
     return () => {
       this.wsListeners.get(eventType)?.delete(callback);
     };
+  }
+
+  async syncSchedules(dispenserId: string, schedules: any[]): Promise<any> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/api/dispensers/${dispenserId}/schedules`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(schedules),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Failed to sync schedules: ${error}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Schedule sync error:', error);
+      throw error;
+    }
   }
 
   /**

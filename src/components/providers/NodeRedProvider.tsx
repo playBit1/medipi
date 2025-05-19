@@ -22,9 +22,8 @@ type NodeRedContextType = {
   isLoading: boolean;
   error: string | null;
   refreshDispensers: () => Promise<void>;
-  sendSchedules: (dispenserId: string, schedules: any[]) => Promise<any>;
-  scanForDispensers: () => Promise<any>;
   syncSchedules: (dispenserId: string, schedules: any[]) => Promise<any>;
+  scanForDispensers: () => Promise<any>;
   getLogs: (
     page?: number,
     pageSize?: number
@@ -112,20 +111,12 @@ export const NodeRedProvider: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     error,
     refreshDispensers,
-    sendSchedules: async (dispenserId: string, schedules: any[]) => {
-      try {
-        setIsLoading(true);
-        return await nodeRedService.sendSchedules(dispenserId, schedules);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to send schedules'
-        );
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    syncSchedules: async (dispenserId: string, schedules: any[]) => {
+    // Add this method to the contextValue object in NodeRedProvider.tsx
+
+    syncSchedules: async (
+      dispenserId: string,
+      schedules: any[]
+    ): Promise<any> => {
       try {
         setIsLoading(true);
         return await nodeRedService.syncSchedules(dispenserId, schedules);
@@ -154,6 +145,7 @@ export const NodeRedProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsLoading(false);
       }
     },
+
     getLogs: fetchLogs,
   };
 

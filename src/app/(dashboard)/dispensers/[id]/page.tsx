@@ -22,10 +22,14 @@ export default function DispenserDetailPage() {
   >('general');
 
   // State for Node-RED integration
-  const { dispensers: liveDispensers, isLoading: nodeRedLoading } =
-    useNodeRed();
+  const {
+    dispensers: liveDispensers,
+    isLoading: nodeRedLoading,
+    syncSchedules,
+  } = useNodeRed();
   const [liveDispenser, setLiveDispenser] = useState<any>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Modal states
   const [modalState, setModalState] = useState<{
@@ -75,38 +79,90 @@ export default function DispenserDetailPage() {
   };
 
   // New function to sync schedules with the physical dispenser via Node-RED
-  const syncSchedules = async () => {
+  const formatSyncSchedules = async () => {
     if (!dispenser) return;
 
     try {
       setIsSyncing(true);
 
-      // Get the schedules from the dispenser object
-      const schedules = dispenser.schedules.map((schedule) => ({
-        id: schedule.id,
-        time: schedule.time,
-        startDate: schedule.startDate,
-        endDate: schedule.endDate,
-        isActive: schedule.isActive,
-        // Include any other necessary schedule data
-        patientName: dispenser.patient?.name || 'Unknown Patient',
-        patientId: dispenser.patient?.id || '',
-        // Add medication info if available
-        // This would need to be expanded based on your data structure
-      }));
+      // We need to fetch full schedule details with chamber/medication information
+      const enrichedSchedules = await Promise.all(
+        dispenser.schedules.map(async (scheduleBasic) => {
+          // Fetch complete schedule details including chamber information
+          const response = await fetch(
+            `/api/dispensers/${dispenserId}/schedules/${scheduleBasic.id}`
+          );
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch schedule details for ${scheduleBasic.id}`
+            );
+          }
+          const fullSchedule = await response.json();
 
-      // Use the nodeRedService directly for more control
-      const { nodeRedService } = await import('@/lib/nodeRed');
+          // Extract chamber assignments with medication information
+          const chamberAssignments = fullSchedule.chambers.map(
+            (chamberContent: {
+              chamber: { chamberNumber: any };
+              medication: { id: any; name: any; dosageUnit: any };
+              dosageAmount: any;
+            }) => ({
+              chamber: chamberContent.chamber.chamberNumber,
+              medication: {
+                id: chamberContent.medication.id,
+                name: chamberContent.medication.name,
+                dosageUnit: chamberContent.medication.dosageUnit,
+              },
+              dosageAmount: chamberContent.dosageAmount,
+            })
+          );
 
-      // Send schedules to the dispenser
-      const result = await nodeRedService.sendSchedules(
+          // Return complete schedule data for synchronization
+          return {
+            id: fullSchedule.id,
+            time: fullSchedule.time,
+            startDate: fullSchedule.startDate,
+            endDate: fullSchedule.endDate,
+            isActive: fullSchedule.isActive,
+
+            // Patient information
+            patientName: dispenser.patient?.name || 'Unknown Patient',
+            patientId: dispenser.patient?.id || '',
+
+            // RFID tag information (if available)
+            rfidTag:
+              dispenser.rfids.find((r) => r.type === 'PATIENT')?.rfidTag || '',
+
+            // Add chamber assignments with medication details
+            chambers: chamberAssignments,
+
+            // Add medication list for easy reference
+            medications: chamberAssignments.map(
+              (ca: {
+                medication: { id: any; name: any; dosageUnit: any };
+                dosageAmount: number;
+              }) => ({
+                id: ca.medication.id,
+                name: ca.medication.name,
+                dosage: `${ca.dosageAmount} ${ca.medication.dosageUnit}${
+                  ca.dosageAmount > 1 ? 's' : ''
+                }`,
+                amount: ca.dosageAmount,
+              })
+            ),
+          };
+        })
+      );
+
+      const result = await syncSchedules(
         dispenser.serialNumber,
-        schedules
+        enrichedSchedules
       );
 
       console.log('Schedules synced successfully:', result);
 
-      // You could show a success notification here
+      // Show success notification
+      setSuccess('Schedules synchronized successfully');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Failed to sync schedules:', err);
       setError(err instanceof Error ? err.message : 'Failed to sync schedules');
@@ -285,6 +341,24 @@ export default function DispenserDetailPage() {
           </button>
         </div>
       </div>
+
+      {success && (
+        <div className='alert alert-success'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            className='stroke-current shrink-0 h-6 w-6'
+            fill='none'
+            viewBox='0 0 24 24'>
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth='2'
+              d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+            />
+          </svg>
+          <span>{success}</span>
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div className='tabs-boxed bg-base-200 p-1 rounded-lg'>
@@ -503,7 +577,7 @@ export default function DispenserDetailPage() {
                 {/* Sync schedules button */}
                 {liveDispenser && dispenser.schedules.length > 0 && (
                   <button
-                    onClick={syncSchedules}
+                    onClick={formatSyncSchedules}
                     className='btn btn-secondary btn-sm'
                     disabled={isSyncing || !liveDispenser}>
                     {isSyncing ? (
