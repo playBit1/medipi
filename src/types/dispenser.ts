@@ -54,20 +54,13 @@ export type Schedule = {
   dispenserId: string;
 };
 
-export type DispenserRfid = {
-  id: string;
-  dispenserId: string;
-  rfidTag: string;
-  type: RfidType;
-};
-
 export type DispenserLog = {
   id: string;
   dispenserId: string;
   scheduleId: string;
   timestamp: Date | string;
   status: DispensingStatus;
-  medications: string; // JSON string of dispensed medications
+  medications: string; // JSON string of dispensed medications since the log is only for viewing
   synced: boolean;
   createdAt: Date | string;
   schedule: {
@@ -97,5 +90,4 @@ export type DispenserFormData = {
   status: DispenserStatus;
 };
 
-// Type for filtering dispensers
 export type DispenserFilterStatus = 'all' | 'assigned' | 'unassigned';

@@ -4,7 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import useDispensers from '@/hooks/useDispensers';
 import DispenserStatusBadge from '@/components/dispensers/DispenserStatusBadge';
-import { DispenserFilterStatus, DispenserWithPatient } from '@/types/dispenser';
+import {
+  DispenserFilterStatus,
+  DispenserStatus,
+  DispenserWithPatient,
+} from '@/types/dispenser';
 import { useNodeRed } from '@/components/providers/NodeRedProvider';
 
 export default function DispensersPage() {
@@ -242,7 +246,7 @@ export default function DispensersPage() {
                             status={
                               dispenser.liveStatus
                                 ? dispenser.liveStatus
-                                : dispenser.status
+                                : DispenserStatus.OFFLINE
                             }
                           />
                         </div>
@@ -265,11 +269,6 @@ export default function DispensersPage() {
                             href={`/dispensers/${dispenser.id}`}
                             className='btn btn-sm btn-outline'>
                             View
-                          </Link>
-                          <Link
-                            href={`/dispensers/${dispenser.id}/edit`}
-                            className='btn btn-sm btn-outline'>
-                            Edit
                           </Link>
                           <button
                             onClick={() => confirmDelete(dispenser)}
