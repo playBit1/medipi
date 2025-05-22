@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/app/(dashboard)/dispensers/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';

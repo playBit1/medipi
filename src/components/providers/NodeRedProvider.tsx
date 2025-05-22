@@ -9,15 +9,16 @@ import React, {
   useState,
   useCallback,
 } from 'react';
-import nodeRedService, {
-  Dispenser,
+import nodeRedService from '@/lib/nodeRed';
+import {
   DispenserLog,
+  LiveDispenser,
   PaginatedResponse,
-} from '@/lib/nodeRed';
+} from '@/types/dispenser';
 
 // Define the context type
 type NodeRedContextType = {
-  dispensers: Dispenser[];
+  dispensers: LiveDispenser[];
   logs: DispenserLog[];
   isLoading: boolean;
   error: string | null;
@@ -46,7 +47,7 @@ export const useNodeRed = () => {
 export const NodeRedProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [dispensers, setDispensers] = useState<Dispenser[]>([]);
+  const [dispensers, setDispensers] = useState<LiveDispenser[]>([]);
   const [logs, setLogs] = useState<DispenserLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

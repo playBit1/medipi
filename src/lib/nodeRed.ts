@@ -1,38 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/lib/nodeRed.ts
-/**
- * NodeRed service for MediPi
- * Provides a centralized interface for communicating with Node-RED middleware
- */
-
-import { DispenserStatus } from '@/types/dispenser';
-
-export type Dispenser = {
-  id: string;
-  serialNumber: string;
-  status: DispenserStatus;
-  ipAddress?: string;
-  lastSeen?: string;
-  lastUpdate?: string;
-  [key: string]: any; // Allow for additional properties
-};
-
-export type DispenserLog = {
-  id?: string;
-  dispenserId: string;
-  timestamp: string;
-  status: string;
-  receivedAt?: string;
-  [key: string]: any; // For other fields like scheduleId, etc.
-};
-
-export type PaginatedResponse<T> = {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-};
+import {
+  DispenserLog,
+  LiveDispenser,
+  PaginatedResponse,
+} from '@/types/dispenser';
 
 export class NodeRedService {
   private baseUrl: string;
@@ -51,7 +22,7 @@ export class NodeRedService {
    * Get all discovered dispensers
    * @returns Promise with dispenser data
    */
-  async getDispensers(): Promise<PaginatedResponse<Dispenser>> {
+  async getDispensers(): Promise<PaginatedResponse<LiveDispenser>> {
     const response = await fetch(`${this.baseUrl}/api/dispensers`);
     if (!response.ok) {
       const error = await response.text().catch(() => 'Unknown error');
@@ -134,7 +105,8 @@ export class NodeRedService {
       this.ws.onopen = () => {
         console.log('WebSocket connected to Node-RED');
         this.isConnecting = false;
-        // Clear any reconnect timeout
+
+        // Clears any reconnect timeout
         if (this.reconnectTimeout) {
           clearTimeout(this.reconnectTimeout);
           this.reconnectTimeout = null;

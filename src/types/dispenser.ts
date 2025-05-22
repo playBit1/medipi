@@ -54,18 +54,42 @@ export type Schedule = {
   dispenserId: string;
 };
 
+export type LiveDispenser = {
+  id: string;
+  serialNumber: string;
+  status: DispenserStatus;
+  ipAddress?: string;
+  lastSeen?: string;
+  lastUpdate?: string;
+  version?: string;
+  model?: string;
+  capabilities?: {
+    chambers?: number;
+    hasRfid?: boolean;
+    hasDisplay?: boolean;
+  };
+};
+
 export type DispenserLog = {
   id: string;
   dispenserId: string;
   scheduleId: string;
   timestamp: Date | string;
   status: DispensingStatus;
-  medications: string; // JSON string of dispensed medications since the log is only for viewing
+  medications: string; // JSON string of dispensed medications
   synced: boolean;
   createdAt: Date | string;
   schedule: {
     time: number;
   };
+};
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 };
 
 export type DispenserDetails = DispenserWithPatient & {
