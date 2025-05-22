@@ -1,7 +1,3 @@
-// src/lib/auth.ts
-/*This file contains the core authentication configuration for NextAuth.js. 
-It defines the credentials provider, session strategy, callback functions, and authentication logic that verifies user credentials against the database. 
-It acts as the central authentication configuration for the entire MediPi system. */
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';

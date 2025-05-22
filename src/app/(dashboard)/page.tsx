@@ -1,4 +1,3 @@
-// src/app/(dashboard)/page.tsx (updated)
 import StatusOverview from '@/components/dashboard/StatusOverview';
 import AlertsList from '@/components/dashboard/AlertsList';
 import RecentLogs from '@/components/dashboard/RecentLogs';

@@ -1,7 +1,3 @@
-/*This file implements the login page with enhanced validation features. 
-It provides client-side form validation for email format and password length, 
-displays clear error messages to users, includes loading state indicators, and handles authentication against the NextAuth.js credentials provider. 
-This is the secure entry point to the MediPi application, ensuring only authorized administrators can access the medication dispensing system.*/
 'use client';
 
 import { useState } from 'react';

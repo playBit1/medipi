@@ -17,14 +17,10 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const skip = (page - 1) * pageSize;
 
-    // Build filter conditions
-    // For SQLite, we can use 'contains' without 'insensitive' mode
-    // For better case-insensitive search with SQLite, convert search term to lowercase
     const searchTerm = search.toLowerCase();
     const where = search
       ? {
           OR: [
-            // In SQLite, we can use LOWER() in a raw query for case-insensitive search
             {
               name: {
                 contains: searchTerm,

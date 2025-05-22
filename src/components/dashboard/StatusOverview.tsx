@@ -1,4 +1,3 @@
-// src/components/dashboard/StatusOverview.tsx
 /*The AlertsList component shows recent system alerts for missed medications, low stock levels, and offline dispensers. 
 It fetches data from the API, categorizes alerts by type with appropriate color coding, and formats timestamps for readability. 
 This helps administrators quickly identify and address issues in the medication dispensing system. */

@@ -1,4 +1,3 @@
-// src/app/api/dashboard/alerts/route.ts
 /*This API route retrieves and formats system alerts, including missed medications, low stock medications, and offline dispensers. 
 It performs complex database queries with Prisma, transforms the data into a consistent alert format, and sorts results by recency. 
 This endpoint supplies data for the AlertsList component. */

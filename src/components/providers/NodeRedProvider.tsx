@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/components/providers/NodeRedProvider.tsx
 'use client';
 
 import React, {

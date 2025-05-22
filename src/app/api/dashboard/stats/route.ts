@@ -1,4 +1,3 @@
-// src/app/api/dashboard/stats/route.ts
 /* This API route fetches system statistics from the database, including counts of patients, dispensers, medications, and alerts. 
 It uses Prisma queries to gather data from multiple tables and returns a structured response. 
 This endpoint provides the data needed by the StatusOverview component. */

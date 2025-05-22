@@ -3,11 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  MedicationWithDetails,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  StockAdjustmentReason,
-} from '@/types/medication';
+import { MedicationWithDetails } from '@/types/medication';
 import StockLevelEditor from '@/components/medications/StockLevelEditor';
 
 export default function MedicationDetailPage() {

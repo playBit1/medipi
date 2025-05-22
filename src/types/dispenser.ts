@@ -1,5 +1,3 @@
-// src/types/dispenser.ts
-
 export enum DispenserStatus {
   ONLINE = 'ONLINE',
   OFFLINE = 'OFFLINE',

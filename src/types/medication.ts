@@ -1,6 +1,3 @@
-// src/types/medication.ts
-// TypeScript type definitions for medication-related data structures
-
 export type Medication = {
   id: string;
   name: string;

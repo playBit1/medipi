@@ -1,7 +1,3 @@
-// src/components/layout/Header.tsx
-/*The Header component displays the application title and user account menu in the top navigation bar.
- It includes user information from the session and provides the logout functionality.
-This component gives users context about who is logged in and provides easy access to account-related functions. */
 'use client';
 
 import { signOut, useSession } from 'next-auth/react';
@@ -37,17 +33,15 @@ export default function Header() {
               tabIndex={0}
               className='btn btn-ghost btn-circle avatar placeholder'>
               <div className='bg-neutral text-neutral-content rounded-full w-10'>
-                <span>{session.user.name?.charAt(0) || 'U'}</span>
+                <span className='content-center'>
+                  {session.user.name?.charAt(0) || 'U'}
+                </span>
               </div>
             </label>
             <ul
               tabIndex={0}
               className='menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52'>
               <li className='p-2 text-sm opacity-70'>{session.user.email}</li>
-
-              <li>
-                <a>Profile</a>
-              </li>
               <li>
                 <a onClick={() => signOut()}>Logout</a>
               </li>

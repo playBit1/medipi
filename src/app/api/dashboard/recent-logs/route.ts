@@ -1,4 +1,3 @@
-// src/app/api/dashboard/recent-logs/route.ts
 /*This endpoint fetches recent dispensing logs with related patient and dispenser information. 
 It performs joined queries using Prisma, parses stored medication data, and formats everything into a structured response. 
 This API route provides the data for the RecentLogs component. */

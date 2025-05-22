@@ -1,6 +1,3 @@
-// src/types/dashboard.ts
-/* This file contains TypeScript type definitions for dashboard-related data structures, including status counts, alerts, medication records, and dispenser logs. 
-It provides strong typing for all dashboard components and API responses, enhancing code quality and developer experience through type safety. */
 export type StatusCount = {
   totalPatients: number;
   totalDispensers: number;

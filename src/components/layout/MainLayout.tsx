@@ -1,7 +1,3 @@
-// src/components/layout/MainLayout.tsx
-/*This component provides the main application layout structure, integrating the header, sidebar, and main content area. 
-It implements a responsive drawer layout that works well on both desktop and mobile devices. 
-This file is crucial for maintaining a consistent UI structure across all authenticated pages of the MediPi application.*/
 import Header from './Header';
 import Sidebar from './Sidebar';
 

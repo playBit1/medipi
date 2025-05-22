@@ -1,6 +1,3 @@
-// src/types/common.ts
-/* This file contains shared/common type definitions used across multiple parts of the application, including API responses, pagination structures, and sorting/filtering options. 
-These reusable types help maintain consistency across the codebase and reduce duplication. */
 export type ApiResponse<T> = {
   data?: T;
   error?: string;

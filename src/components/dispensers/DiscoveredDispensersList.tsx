@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/components/dispensers/DiscoveredDispensersList.tsx
 'use client';
 
 import DispenserStatusBadge from './DispenserStatusBadge';

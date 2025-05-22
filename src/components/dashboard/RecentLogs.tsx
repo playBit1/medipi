@@ -1,4 +1,3 @@
-// src/components/dashboard/RecentLogs.tsx
 /*This component displays a table of recent medication dispensing events, including time, patient, dispenser, medications, and status information. 
 It fetches log data from the API and shows dispensing status with color-coded badges. 
 This provides administrators with insight into recent system activity and medication adherence. */
