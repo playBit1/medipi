@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 // PUT /api/dispensers/[id]/patient - Assign patient to dispenser
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,7 +26,7 @@ export async function PUT(
 
     // Check if dispenser exists
     const dispenser = await prisma.dispenser.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         patient: true,
       },
@@ -52,7 +52,7 @@ export async function PUT(
     }
 
     // Check if patient is already assigned to a different dispenser
-    if (patient.dispenser && patient.dispenser.id !== params.id) {
+    if (patient.dispenser && patient.dispenser.id !== (await params).id) {
       return NextResponse.json(
         {
           error: 'Patient is already assigned to a different dispenser',
@@ -73,7 +73,7 @@ export async function PUT(
 
     // Assign patient to dispenser
     const updatedDispenser = await prisma.dispenser.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         patientId: data.patientId,
       },
@@ -85,7 +85,7 @@ export async function PUT(
     // Create RFID tag for patient if it doesn't exist
     const existingPatientRfid = await prisma.dispenserRfid.findFirst({
       where: {
-        dispenserId: params.id,
+        dispenserId: (await params).id,
         type: 'PATIENT',
       },
     });
@@ -93,7 +93,7 @@ export async function PUT(
     if (!existingPatientRfid) {
       await prisma.dispenserRfid.create({
         data: {
-          dispenserId: params.id,
+          dispenserId: (await params).id,
           rfidTag: `PATIENT-${dispenser.serialNumber}`,
           type: 'PATIENT',
         },
@@ -113,7 +113,7 @@ export async function PUT(
 // DELETE /api/dispensers/[id]/patient - Unassign patient from dispenser
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -123,7 +123,7 @@ export async function DELETE(
 
     // Check if dispenser exists
     const dispenser = await prisma.dispenser.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         patient: true,
         schedules: true,
@@ -158,7 +158,7 @@ export async function DELETE(
 
     // Unassign patient from dispenser
     const updatedDispenser = await prisma.dispenser.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         patientId: null,
       },
@@ -167,7 +167,7 @@ export async function DELETE(
     // Remove patient RFID tag
     await prisma.dispenserRfid.deleteMany({
       where: {
-        dispenserId: params.id,
+        dispenserId: (await params).id,
         type: 'PATIENT',
       },
     });

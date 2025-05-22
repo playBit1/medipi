@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 // GET /api/dispensers/[id]/schedules/[scheduleId] - Get a specific schedule
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; scheduleId: string } }
+  { params }: { params: Promise<{ id: string; scheduleId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,8 +17,8 @@ export async function GET(
     // Check if schedule exists and belongs to the dispenser
     const schedule = await prisma.schedule.findFirst({
       where: {
-        id: params.scheduleId,
-        dispenserId: params.id,
+        id: (await params).scheduleId,
+        dispenserId: (await params).id,
       },
       include: {
         patient: true,
@@ -56,7 +56,7 @@ export async function GET(
 // PUT /api/dispensers/[id]/schedules/[scheduleId] - Update a schedule
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; scheduleId: string } }
+  { params }: { params: Promise<{ id: string; scheduleId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -69,8 +69,8 @@ export async function PUT(
     // Check if schedule exists and belongs to the dispenser
     const existingSchedule = await prisma.schedule.findFirst({
       where: {
-        id: params.scheduleId,
-        dispenserId: params.id,
+        id: (await params).scheduleId,
+        dispenserId: (await params).id,
       },
       include: {
         chambers: true,
@@ -106,9 +106,9 @@ export async function PUT(
     if (data.time !== undefined && data.time !== existingSchedule.time) {
       const conflictingSchedule = await prisma.schedule.findFirst({
         where: {
-          dispenserId: params.id,
+          dispenserId: (await params).id,
           time: data.time,
-          id: { not: params.scheduleId },
+          id: { not: (await params).scheduleId },
         },
       });
 
@@ -125,7 +125,7 @@ export async function PUT(
 
     // Update schedule
     await prisma.schedule.update({
-      where: { id: params.scheduleId },
+      where: { id: (await params).scheduleId },
       data: {
         time: data.time,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
@@ -138,7 +138,7 @@ export async function PUT(
     if (data.chamberAssignments && data.chamberAssignments.length > 0) {
       // Delete existing chamber contents
       await prisma.chamberContent.deleteMany({
-        where: { scheduleId: params.scheduleId },
+        where: { scheduleId: (await params).scheduleId },
       });
 
       // Create new chamber contents
@@ -148,7 +148,7 @@ export async function PUT(
             data: {
               chamberId: assignment.chamberId,
               medicationId: assignment.medicationId,
-              scheduleId: params.scheduleId,
+              scheduleId: (await params).scheduleId,
               dosageAmount: assignment.dosageAmount || 1,
               currentAmount: 30, // Default amount for new assignments
             },
@@ -159,7 +159,7 @@ export async function PUT(
 
     // Fetch the updated schedule with related data
     const finalSchedule = await prisma.schedule.findUnique({
-      where: { id: params.scheduleId },
+      where: { id: (await params).scheduleId },
       include: {
         chambers: {
           include: {
@@ -183,7 +183,7 @@ export async function PUT(
 // DELETE /api/dispensers/[id]/schedules/[scheduleId] - Delete a schedule
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; scheduleId: string } }
+  { params }: { params: Promise<{ id: string; scheduleId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -194,8 +194,8 @@ export async function DELETE(
     // Check if schedule exists and belongs to the dispenser
     const schedule = await prisma.schedule.findFirst({
       where: {
-        id: params.scheduleId,
-        dispenserId: params.id,
+        id: (await params).scheduleId,
+        dispenserId: (await params).id,
       },
       include: {
         chambers: true,
@@ -211,12 +211,12 @@ export async function DELETE(
 
     // Delete related chamber contents first
     await prisma.chamberContent.deleteMany({
-      where: { scheduleId: params.scheduleId },
+      where: { scheduleId: (await params).scheduleId },
     });
 
     // Delete the schedule
     await prisma.schedule.delete({
-      where: { id: params.scheduleId },
+      where: { id: (await params).scheduleId },
     });
 
     return NextResponse.json({ success: true });

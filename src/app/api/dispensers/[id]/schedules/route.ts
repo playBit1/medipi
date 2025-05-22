@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 // GET /api/dispensers/[id]/schedules - Get all schedules for a dispenser
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export async function GET(
 
     // Check if dispenser exists
     const dispenser = await prisma.dispenser.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     if (!dispenser) {
@@ -28,7 +28,7 @@ export async function GET(
 
     // Get schedules
     const schedules = await prisma.schedule.findMany({
-      where: { dispenserId: params.id },
+      where: { dispenserId: (await params).id },
       include: {
         chambers: {
           include: {
@@ -53,7 +53,7 @@ export async function GET(
 // POST /api/dispensers/[id]/schedules - Create a new schedule
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -65,7 +65,7 @@ export async function POST(
 
     // Check if dispenser exists
     const dispenser = await prisma.dispenser.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         patient: true,
       },
@@ -110,7 +110,7 @@ export async function POST(
     // Check for existing schedules at the same time
     const existingSchedule = await prisma.schedule.findFirst({
       where: {
-        dispenserId: params.id,
+        dispenserId: (await params).id,
         time: data.time,
       },
     });
@@ -128,7 +128,7 @@ export async function POST(
     // Create schedule
     const schedule = await prisma.schedule.create({
       data: {
-        dispenserId: params.id,
+        dispenserId: (await params).id,
         patientId: dispenser.patient.id,
         time: data.time,
         startDate: new Date(data.startDate),

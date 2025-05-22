@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 // POST /api/medications/[id]/stock - Adjust medication stock level
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,7 +26,7 @@ export async function POST(
 
     // Check if medication exists
     const medication = await prisma.medication.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     if (!medication) {
@@ -49,7 +49,7 @@ export async function POST(
 
     // Update medication stock level
     const updatedMedication = await prisma.medication.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         stockLevel: newStockLevel,
       },

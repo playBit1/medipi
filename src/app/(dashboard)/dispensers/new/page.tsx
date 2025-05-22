@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// src/app/(dashboard)/dispensers/new/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -72,7 +70,7 @@ export default function NewDispenserPage() {
   };
 
   // Handle selection of a dispenser
-  const handleSelectDispenser = (dispenser: any) => {
+  const handleSelectDispenser = (dispenser: DispenserFormData) => {
     // Convert Node-RED dispenser to DispenserFormData format
     let dispenserStatus: DispenserStatus = DispenserStatus.OFFLINE;
 
@@ -97,9 +95,8 @@ export default function NewDispenserPage() {
       }
     }
 
-    // Set the selected dispenser
     setSelectedDispenser({
-      serialNumber: dispenser.serialNumber || dispenser.id,
+      serialNumber: dispenser.serialNumber,
       status: dispenserStatus,
     });
   };
@@ -178,7 +175,8 @@ export default function NewDispenserPage() {
                   {discoveredDispensers
                     .filter(
                       (dispenser) =>
-                        (dispenser.status || 'OFFLINE') === 'ONLINE'
+                        (dispenser.status || DispenserStatus.OFFLINE) ===
+                        'ONLINE'
                     )
                     .map((dispenser) => (
                       <tr
@@ -206,7 +204,7 @@ export default function NewDispenserPage() {
                         <td>{dispenser.ipAddress || 'Unknown'}</td>
                         <td>
                           <DispenserStatusBadge
-                            status={dispenser.status || 'OFFLINE'}
+                            status={dispenser.status || DispenserStatus.OFFLINE}
                           />
                         </td>
                         <td>

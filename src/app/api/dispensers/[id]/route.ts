@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 // GET /api/dispensers/[id] - Get a specific dispenser by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const dispenser = await prisma.dispenser.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         patient: {
           select: {
@@ -79,7 +79,7 @@ export async function GET(
 // PUT /api/dispensers/[id] - Update a dispenser
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -91,7 +91,7 @@ export async function PUT(
 
     // Check if dispenser exists
     const existingDispenser = await prisma.dispenser.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     if (!existingDispenser) {
@@ -103,7 +103,7 @@ export async function PUT(
 
     // Update dispenser
     const updatedDispenser = await prisma.dispenser.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         status: data.status,
         lastSeen:
@@ -124,7 +124,7 @@ export async function PUT(
 // DELETE /api/dispensers/[id] - Delete a dispenser
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -134,7 +134,7 @@ export async function DELETE(
 
     // Check if dispenser exists with related data
     const dispenser = await prisma.dispenser.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         patient: true,
         schedules: true,
@@ -198,27 +198,27 @@ export async function DELETE(
       // Delete RFID tags
       if (dispenser.rfids.length > 0) {
         await tx.dispenserRfid.deleteMany({
-          where: { dispenserId: params.id },
+          where: { dispenserId: (await params).id },
         });
       }
 
       // Delete logs
       if (dispenser.dispenserLogs.length > 0) {
         await tx.dispenserLog.deleteMany({
-          where: { dispenserId: params.id },
+          where: { dispenserId: (await params).id },
         });
       }
 
       // Delete chambers
       if (dispenser.chambers.length > 0) {
         await tx.chamber.deleteMany({
-          where: { dispenserId: params.id },
+          where: { dispenserId: (await params).id },
         });
       }
 
       // Finally delete the dispenser itself
       await tx.dispenser.delete({
-        where: { id: params.id },
+        where: { id: (await params).id },
       });
     });
 

@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 // GET /api/patients/[id] - Get a specific patient by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const patient = await prisma.patient.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         dispenser: {
           select: {
@@ -58,7 +58,7 @@ export async function GET(
 // PUT /api/patients/[id] - Update a patient
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -81,7 +81,7 @@ export async function PUT(
 
     // Check if patient exists
     const existingPatient = await prisma.patient.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     if (!existingPatient) {
@@ -90,7 +90,7 @@ export async function PUT(
 
     // Update patient
     const updatedPatient = await prisma.patient.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         name: data.name,
         dateOfBirth,
@@ -111,7 +111,7 @@ export async function PUT(
 // DELETE /api/patients/[id] - Delete a patient
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -121,7 +121,7 @@ export async function DELETE(
 
     // Check if patient exists
     const patient = await prisma.patient.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         dispenser: true,
         schedules: true,
@@ -156,7 +156,7 @@ export async function DELETE(
 
     // Delete patient
     await prisma.patient.delete({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     return NextResponse.json({ success: true });
