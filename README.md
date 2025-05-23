@@ -1,7 +1,7 @@
 # MediPi - Automated Medication Dispenser System
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Next.js-14.0-black?style=for-the-badge&logo=next.js" alt="Next.js"/>
+  <img src="https://img.shields.io/badge/Next.js-15.0-black?style=for-the-badge&logo=next.js" alt="Next.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/Raspberry%20Pi-Compatible-red?style=for-the-badge&logo=raspberry-pi" alt="Raspberry Pi"/>
   <img src="https://img.shields.io/badge/MQTT-Protocol-purple?style=for-the-badge" alt="MQTT"/>
@@ -107,19 +107,19 @@ MediPi is an automated medication dispensing system designed for healthcare faci
 
 ### Web Dashboard
 
-- **Patient Management**: Add, edit, and assign patients to dispensers
-- **Medication Inventory**: Track stock levels and set low-stock alerts
-- **Schedule Creation**: Define medication schedules with time and dosage
-- **Real-time Monitoring**: View dispenser status and recent dispensing events
-- **Alert Dashboard**: Monitor missed doses and system issues
+- **Patient Management**: Add, edit, and assign patients to dispensers ✅
+- **Medication Inventory**: Track stock levels and set low-stock alerts ❌
+- **Schedule Creation**: Define medication schedules with time and dosage ✅
+- **Real-time Monitoring**: View dispenser status and recent dispensing events ✅
+- **Alert Dashboard**: Monitor missed doses and system issues ❌
 
 ### Dispenser Functionality
 
-- **RFID Authentication**: Secure patient verification before dispensing
-- **Scheduled Dispensing**: Automatic alerts when medication is due
-- **Offline Mode**: Continue operation even without network connectivity
-- **Hardware Control**: Precise servo control for accurate dispensing
-- **User Feedback**: OLED display and audio alerts for patient guidance
+- **RFID Authentication**: Secure patient verification before dispensing 🟨
+- **Scheduled Dispensing**: Automatic alerts when medication is due ✅
+- **Offline Mode**: Continue operation even without network connectivity ✅
+- **Hardware Control**: Precise servo control for accurate dispensing ❌
+- **User Feedback**: OLED display and audio alerts for patient guidance ✅
 
 ## 🔧 Hardware Requirements
 
@@ -159,7 +159,7 @@ medipi/
 │   ├── components/        # React components
 │   ├── lib/              # Utilities and services
 │   └── types/            # TypeScript definitions
-├── dispenser/             # Dispenser Python code
+├── dispenser_files/      # Dispenser Python code
 │   ├── controllers/      # Hardware control modules
 │   └── medipi_dispenser.py
 ```
