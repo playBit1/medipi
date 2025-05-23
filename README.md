@@ -37,14 +37,59 @@ MediPi is an automated medication dispensing system designed for healthcare faci
    - Buzzer for alerts
    - Python-based hardware controller
 
+## 📱 Features
+
+### Web Dashboard
+
+- **Patient Management**: Add, edit, and assign patients to dispensers ✅
+- **Medication Inventory**: Track stock levels and set low-stock alerts ❌
+- **Schedule Creation**: Define medication schedules with time and dosage ✅
+- **Real-time Monitoring**: View dispenser status and recent dispensing events ✅
+- **Alert Dashboard**: Monitor missed doses and system issues ❌
+
+### Dispenser Functionality
+
+- **RFID Authentication**: Secure patient verification before dispensing 🟨
+- **Scheduled Dispensing**: Automatic alerts when medication is due ✅
+- **Offline Mode**: Continue operation even without network connectivity ✅
+- **Hardware Control**: Precise servo control for accurate dispensing ❌
+- **User Feedback**: OLED display and audio alerts for patient guidance ✅
+
+## 🔧 Hardware Requirements
+
+### Central Hub (Raspberry Pi 4)
+
+- Raspberry Pi 4 (4GB+ RAM recommended)
+- MicroSD card (32GB+)
+- Ethernet connection or WiFi
+- Power supply
+
+### Each Dispenser Unit
+
+- Raspberry Pi Zero 2W
+- 6x Continuous rotation servos
+- 128x64 OLED display (I2C)
+- MFRC522 RFID reader
+- Piezo buzzer
+- PCA9685 servo driver board
+- 4.5/5V power supply (3A+)
+
+## 🛠️ Development
+
+### Tech Stack
+
+- **Frontend**: Next.js, TypeScript, TailwindCSS, DaisyUI
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Database**: SQLite
+- **IoT Communication**: MQTT, WebSockets
+- **Hardware Control**: Python, RPi.GPIO, Adafruit libraries
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ and npm
 - Python 3.8+
-- Raspberry Pi 4 (for central hub)
-- Raspberry Pi Zero 2W (for each dispenser)
 - MQTT broker (Mosquitto)
 
 ### Central Hub Installation
@@ -103,53 +148,6 @@ MediPi is an automated medication dispensing system designed for healthcare faci
    sudo systemctl start medipi-dispenser
    ```
 
-## 📱 Features
-
-### Web Dashboard
-
-- **Patient Management**: Add, edit, and assign patients to dispensers ✅
-- **Medication Inventory**: Track stock levels and set low-stock alerts ❌
-- **Schedule Creation**: Define medication schedules with time and dosage ✅
-- **Real-time Monitoring**: View dispenser status and recent dispensing events ✅
-- **Alert Dashboard**: Monitor missed doses and system issues ❌
-
-### Dispenser Functionality
-
-- **RFID Authentication**: Secure patient verification before dispensing 🟨
-- **Scheduled Dispensing**: Automatic alerts when medication is due ✅
-- **Offline Mode**: Continue operation even without network connectivity ✅
-- **Hardware Control**: Precise servo control for accurate dispensing ❌
-- **User Feedback**: OLED display and audio alerts for patient guidance ✅
-
-## 🔧 Hardware Requirements
-
-### Central Hub (Raspberry Pi 4)
-
-- Raspberry Pi 4 (4GB+ RAM recommended)
-- MicroSD card (32GB+)
-- Ethernet connection or WiFi
-- Power supply
-
-### Each Dispenser Unit
-
-- Raspberry Pi Zero 2W
-- 6x Continuous rotation servos
-- 128x64 OLED display (I2C)
-- MFRC522 RFID reader
-- Piezo buzzer
-- PCA9685 servo driver board
-- 4.5/5V power supply (3A+)
-
-## 🛠️ Development
-
-### Tech Stack
-
-- **Frontend**: Next.js, TypeScript, TailwindCSS, DaisyUI
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: SQLite
-- **IoT Communication**: MQTT, WebSockets
-- **Hardware Control**: Python, RPi.GPIO, Adafruit libraries
-
 ### Project Structure
 
 ```
@@ -166,9 +164,9 @@ medipi/
 
 ## 🙏 Acknowledgments
 
-- Developed as part of the Embedded Systems course project
+- Developed as part of the Embedded Systems unit final project
 
----
+--
 
 ## ⚠️ Disclaimer
 
