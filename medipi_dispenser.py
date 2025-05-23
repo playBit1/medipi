@@ -8,7 +8,7 @@ import os
 import signal
 import sys
 import functools
-from datetime import datetime, timedelta
+from datetime import datetime
 import threading
 from collections import defaultdict
 
@@ -98,7 +98,7 @@ class Config:
         self.values = self.load_config()
 
     def load_config(self):
-        """Load configuration with defaults"""
+        """loads default config"""
         config = {
             "mqtt": {
                 "broker_host": os.environ.get("MEDIPI_HUB_IP", "192.168.1.156"),
@@ -121,17 +121,14 @@ class Config:
             },
         }
 
-        # Load from file if exists (in a real system)
-        # For now, just return the defaults
         return config
 
     def get(self, section, key):
         """Get a configuration value"""
         return self.values.get(section, {}).get(key)
 
-
 class ThrottledDisplay:
-    """Display controller that prevents too-frequent updates"""
+    """Display controller that prevents fast display updates"""
 
     def __init__(self, display_controller, min_interval=0.1):
         self.display = display_controller
@@ -185,8 +182,6 @@ class MediPiDispenser:
 
         # Initialize hardware
         self.hardware = HardwareController()
-
-        # Create throttled display
         self.display = ThrottledDisplay(
             self.hardware.display,
             self.config.get("hardware", "display_update_interval"),
@@ -203,7 +198,7 @@ class MediPiDispenser:
             set()
         )  # Track which hours we've already processed today
         self.dispensing_in_progress = False
-        self.pending_messages = []  # For offline operation
+        self.pending_messages = []  # For offline operation logs
 
         # Create a unique client ID to prevent conflicts
         unique_id = f"{SERIAL_NUMBER}-{uuid.uuid4().hex[:8]}"
@@ -362,7 +357,7 @@ class MediPiDispenser:
         """Disconnect from MQTT broker"""
         # Send offline status before disconnecting
         self.set_status("OFFLINE", reason="Controlled Shutdown")
-        time.sleep(1)  # Give time for the message to be sent
+        time.sleep(1)
 
         # Stop the loop and disconnect
         self.client.loop_stop()
@@ -860,11 +855,11 @@ class MediPiDispenser:
                 "OFFLINE MODE", "No connection", "Operating autonomously"
             )
             self.status = "OFFLINE_AUTONOMOUS"
-            time.sleep(2)  # Show the message for 2 seconds
+            time.sleep(2) 
         else:
             print("Dispenser service running with MQTT connection")
 
-        # Start threads regardless of connection status
+        # Start threads
         connection_thread = threading.Thread(
             target=self.maintain_connection, daemon=True
         )
@@ -876,7 +871,7 @@ class MediPiDispenser:
         # Initial default display
         self.update_default_display()
 
-        # Main thread can now just sleep and wait for signals
+        # Main thread can just sleeps and wait for signals
         try:
             while True:
                 time.sleep(1)
