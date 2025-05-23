@@ -187,7 +187,7 @@ test_schedule = {
     "isActive": True,
     "startDate": "2025-05-01T00:00:00Z",
     "endDate": "2025-06-01T00:00:00Z",
-    "rfidTag": "Hello World",  # This will match with our mock RFID
+    "rfidTag": "Patient-DISP1573AB97",  # This will match with our mock RFID
     "medications": test_medications,
     "chambers": chamber_assignments
 }
