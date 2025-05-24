@@ -10,12 +10,10 @@ export default function MedicationsPage() {
     medications,
     totalCount,
     currentPage,
-    pageSize,
     totalPages,
     loading,
     error,
     setPage,
-    setPageSize,
     setSearch,
     setLowStockFilter,
     deleteMedication,
@@ -69,11 +67,6 @@ export default function MedicationsPage() {
       medicationId: '',
       medicationName: '',
     });
-  };
-
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setPageSize(parseInt(e.target.value));
-    setPage(1); // Reset to first page when changing page size
   };
 
   return (
@@ -170,18 +163,6 @@ export default function MedicationsPage() {
           <div className='flex justify-between items-center text-sm'>
             <div>
               Showing {medications.length} of {totalCount} medications
-            </div>
-            <div className='flex items-center gap-2'>
-              <span>Items per page:</span>
-              <select
-                className='select select-bordered select-sm'
-                value={pageSize}
-                onChange={handlePageSizeChange}>
-                <option value='5'>5</option>
-                <option value='10'>10</option>
-                <option value='20'>20</option>
-                <option value='50'>50</option>
-              </select>
             </div>
           </div>
 

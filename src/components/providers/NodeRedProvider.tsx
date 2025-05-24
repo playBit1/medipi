@@ -88,7 +88,7 @@ export const NodeRedProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     // Fetch initial data
     refreshDispensers();
-    fetchLogs(1, 10).catch(console.error);
+    console.log(fetchLogs(1, 10).catch(console.error));
 
     // Subscribe to WebSocket updates for dispensers
     const unsubscribe = nodeRedService.subscribe('dispensers', (data) => {
@@ -111,8 +111,6 @@ export const NodeRedProvider: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     error,
     refreshDispensers,
-    // Add this method to the contextValue object in NodeRedProvider.tsx
-
     syncSchedules: async (
       dispenserId: string,
       schedules: any[]
