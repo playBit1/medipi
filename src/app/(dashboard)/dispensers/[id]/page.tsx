@@ -454,7 +454,9 @@ export default function DispenserDetailPage() {
 
             <div className='form-control'>
               <label className='label'>
-                <span className='label-text font-semibold'>RFID Tags</span>
+                <span className='label-text font-semibold'>
+                  Assigned RFID Tags
+                </span>
               </label>
               <div className='flex flex-wrap gap-2 p-3 bg-base-100 rounded-lg min-h-12'>
                 {dispenser.rfids.map((rfid) => (

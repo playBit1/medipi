@@ -69,7 +69,8 @@ def with_error_handling(default_return=None, log_error=True):
 
     return decorator
 
-#Dispensers follow event driven architechture with publishers and subscribers
+
+# Dispensers follow event driven architechture with publishers and subscribers
 class EventBus:
     """Event system for decoupled communication"""
 
@@ -366,7 +367,6 @@ class MediPiDispenser:
 
         # Stop the loop and disconnect
         self.client.loop_stop()
-        self.client.disconnect()
         print("Disconnected from MQTT broker")
 
     def on_connect(self, client, userdata, flags, rc):

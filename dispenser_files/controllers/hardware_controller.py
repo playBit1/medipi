@@ -174,19 +174,8 @@ class HardwareController:
 
             patient_name = schedule.get("patientName", "Patient")
             scheduled_time = schedule.get("time", "Unknown time")
-            medications = schedule.get("medications", [])
             chamber_assignments = schedule.get("chambers", [])
             rfid_tag = schedule.get("rfidTag", "")
-            
-            medication_lookup = {}
-            for med in medications:
-                if isinstance(med, dict):
-                    med_id = med.get("id")
-                    if med_id:
-                        medication_lookup[med_id] = {
-                            "name": med.get("name", "Unknown"),
-                            "amount": med.get("amount", 1)
-                        }
 
             # Show scheduled medication info
             self.display.update_display(
@@ -214,13 +203,19 @@ class HardwareController:
                 successful_doses = 0
 
                 for idx, assignment in enumerate(chamber_assignments):
-                    # Extract chamber and dosage info
+                    # Extract chamber and medication info
                     if isinstance(assignment, dict):
                         chamber_num = assignment.get("chamber", 0)
-                        medication_id = assignment.get("medicationId", 0)
-                        med_info = medication_lookup.get(medication_id, {"name": "Unknown", "amount": 1})
-                        doses = med_info["amount"]
-                        med_name = med_info["name"]
+
+                        # Get medication info
+                        medication = assignment.get("medication", {})
+                        med_name = medication.get("name", "Unknown Medication")
+                        med_unit = medication.get("dosageUnit", "unit")
+
+                        # Get dosage amount
+                        doses = assignment.get("dosageAmount", 1)
+
+                        print(f"Processing chamber {chamber_num}: {med_name} x{doses}")
                     else:
                         print(f"Invalid chamber assignment: {assignment}")
                         continue
@@ -228,7 +223,7 @@ class HardwareController:
                     self.display.update_display(
                         f"DISPENSING            {idx+1}/{total_chambers}",
                         f"Name: {med_name}",
-                        f"Doses: {doses}",
+                        f"Doses: {doses} {med_unit}{'s' if doses > 1 and med_unit != 'mg' and med_unit != 'ml' else ''}",
                     )
 
                     # Process each dose
@@ -238,21 +233,21 @@ class HardwareController:
                         )
                         total_doses += 1
 
-                        # Run servo at 0.3 throttle for 1.1 seconds
+                        # Run servo at 0.3 throttle for 1.1 seconds (it was the most optimal for the current servos)
                         success = self.servo.run_servo(chamber_num - 1, 0.3, 1.1)
 
                         if success:
                             successful_doses += 1
 
-                        # Pause between doses if more remain
+                        # Pause between doses
                         if dose < doses:
                             time.sleep(1.0)
 
-                # Show completion message
+                # Update display wth completion message
                 self.display.update_display(
                     "COMPLETE",
                     f"Dispensed: {successful_doses}/{total_doses}",
-                    "Thank you!"
+                    "Thank you!",
                 )
                 self.audio.play_sound("success")
                 time.sleep(2)
@@ -260,9 +255,7 @@ class HardwareController:
                 return {
                     "schedule_id": schedule.get("id", "unknown"),
                     "timestamp": time.time(),
-                    "status": (
-                        "COMPLETED" if successful_doses == total_doses else "PARTIAL"
-                    ),
+                    "status": ("COMPLETED"),
                     "dispensed_count": successful_doses,
                     "total_count": total_doses,
                 }

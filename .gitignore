@@ -48,3 +48,5 @@ next-env.d.ts
 *.sqlite
 *.sqlite3
 /src/generated/*
+
+.vscode/**/*
