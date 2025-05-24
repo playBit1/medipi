@@ -1,10 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { PrismaClient } from '../src/generated/prisma';
+import {
+  PrismaClient,
+  DispenserStatus,
+  DispensingStatus,
+  RfidType,
+} from '../src/generated/prisma';
 import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-async function main() {
+interface MedicationData {
+  name: string;
+  description: string;
+  dosageUnit: string;
+  stockLevel: number;
+  stockThreshold: number;
+}
+
+interface ChamberAssignment {
+  chamberId: string;
+  medicationId: string;
+  dosageAmount: number;
+}
+
+async function main(): Promise<void> {
   console.log('Starting database seeding...');
 
   // Clean up existing data if needed
@@ -21,7 +39,8 @@ async function main() {
 
   // Create admin users
   console.log('Creating admin users...');
-  const adminPassword = await hash('admin123', 10);
+  const adminPassword: string = await hash('admin123', 10);
+  const nursePassword: string = await hash('MedNurse123277655', 10);
 
   const admin1 = await prisma.user.create({
     data: {
@@ -34,7 +53,7 @@ async function main() {
   const admin2 = await prisma.user.create({
     data: {
       email: 'nurse@medipi.com',
-      password: adminPassword,
+      password: nursePassword,
       name: 'Head Nurse',
     },
   });
@@ -43,460 +62,300 @@ async function main() {
 
   // Create medications
   console.log('Creating medications...');
-  const medications = await Promise.all([
-    prisma.medication.create({
-      data: {
-        name: 'Aspirin',
-        description: 'Pain reliever',
-        dosageUnit: 'pill',
-        stockLevel: 100,
-        stockThreshold: 20,
-      },
-    }),
-    prisma.medication.create({
-      data: {
-        name: 'Lisinopril',
-        description: 'ACE inhibitor for high blood pressure',
-        dosageUnit: 'pill',
-        stockLevel: 150,
-        stockThreshold: 30,
-      },
-    }),
-    prisma.medication.create({
-      data: {
-        name: 'Metformin',
-        description: 'Diabetes medication',
-        dosageUnit: 'pill',
-        stockLevel: 80,
-        stockThreshold: 15,
-      },
-    }),
-    prisma.medication.create({
-      data: {
-        name: 'Atorvastatin',
-        description: 'Cholesterol medication',
-        dosageUnit: 'pill',
-        stockLevel: 120,
-        stockThreshold: 25,
-      },
-    }),
-    prisma.medication.create({
-      data: {
-        name: 'Levothyroxine',
-        description: 'Thyroid hormone replacement',
-        dosageUnit: 'pill',
-        stockLevel: 90,
-        stockThreshold: 20,
-      },
-    }),
-    prisma.medication.create({
-      data: {
-        name: 'Amoxicillin',
-        description: 'Antibiotic',
-        dosageUnit: 'pill',
-        stockLevel: 50,
-        stockThreshold: 10,
-      },
-    }),
-    prisma.medication.create({
-      data: {
-        name: 'Hydrochlorothiazide',
-        description: 'Diuretic for high blood pressure',
-        dosageUnit: 'pill',
-        stockLevel: 75,
-        stockThreshold: 15,
-      },
-    }),
-    prisma.medication.create({
-      data: {
-        name: 'Omeprazole',
-        description: 'Acid reflux medication',
-        dosageUnit: 'pill',
-        stockLevel: 110,
-        stockThreshold: 20,
-      },
-    }),
-  ]);
+  const medicationData: MedicationData[] = [
+    {
+      name: 'Aspirin',
+      description: 'Pain reliever and blood thinner',
+      dosageUnit: 'pill',
+      stockLevel: 100,
+      stockThreshold: 20,
+    },
+    {
+      name: 'Panadol',
+      description: 'Paracetamol/Acetaminophen for pain and fever',
+      dosageUnit: 'pill',
+      stockLevel: 200,
+      stockThreshold: 40,
+    },
+    {
+      name: 'Ibuprofen',
+      description: 'Anti-inflammatory pain reliever',
+      dosageUnit: 'pill',
+      stockLevel: 150,
+      stockThreshold: 30,
+    },
+    {
+      name: 'Lisinopril',
+      description: 'ACE inhibitor for high blood pressure',
+      dosageUnit: 'pill',
+      stockLevel: 150,
+      stockThreshold: 30,
+    },
+    {
+      name: 'Metformin',
+      description: 'Diabetes medication',
+      dosageUnit: 'pill',
+      stockLevel: 80,
+      stockThreshold: 15,
+    },
+    {
+      name: 'Atorvastatin',
+      description: 'Cholesterol medication',
+      dosageUnit: 'pill',
+      stockLevel: 120,
+      stockThreshold: 25,
+    },
+    {
+      name: 'Levothyroxine',
+      description: 'Thyroid hormone replacement',
+      dosageUnit: 'pill',
+      stockLevel: 90,
+      stockThreshold: 20,
+    },
+    {
+      name: 'Amoxicillin',
+      description: 'Antibiotic',
+      dosageUnit: 'pill',
+      stockLevel: 50,
+      stockThreshold: 10,
+    },
+    {
+      name: 'Hydrochlorothiazide',
+      description: 'Diuretic for high blood pressure',
+      dosageUnit: 'pill',
+      stockLevel: 75,
+      stockThreshold: 15,
+    },
+    {
+      name: 'Omeprazole',
+      description: 'Acid reflux medication',
+      dosageUnit: 'pill',
+      stockLevel: 110,
+      stockThreshold: 20,
+    },
+    {
+      name: 'Vitamin D',
+      description: 'Vitamin D3 supplement',
+      dosageUnit: 'pill',
+      stockLevel: 180,
+      stockThreshold: 35,
+    },
+    {
+      name: 'Multivitamin',
+      description: 'Daily multivitamin supplement',
+      dosageUnit: 'pill',
+      stockLevel: 160,
+      stockThreshold: 30,
+    },
+  ];
+
+  const medications = await Promise.all(
+    medicationData.map((data) => prisma.medication.create({ data }))
+  );
 
   console.log(`Created ${medications.length} medications`);
 
   // Create patients
   console.log('Creating patients...');
-  const patients = await Promise.all([
-    prisma.patient.create({
-      data: {
-        name: 'John Doe',
-        dateOfBirth: new Date('1950-05-15'),
-        roomNumber: '101A',
-      },
-    }),
-    prisma.patient.create({
-      data: {
-        name: 'Jane Smith',
-        dateOfBirth: new Date('1945-10-20'),
-        roomNumber: '102B',
-      },
-    }),
-    prisma.patient.create({
-      data: {
-        name: 'Robert Johnson',
-        dateOfBirth: new Date('1955-03-25'),
-        roomNumber: '103C',
-      },
-    }),
-    prisma.patient.create({
-      data: {
-        name: 'Mary Williams',
-        dateOfBirth: new Date('1960-12-10'),
-        roomNumber: '104D',
-      },
-    }),
-    prisma.patient.create({
-      data: {
-        name: 'David Brown',
-        dateOfBirth: new Date('1952-07-30'),
-        roomNumber: '105E',
-      },
-    }),
-    prisma.patient.create({
-      data: {
-        name: 'Elizabeth Davis',
-        dateOfBirth: new Date('1948-11-05'),
-        roomNumber: null, // Testing null room number
-      },
-    }),
-  ]);
+  const patientData = [
+    {
+      name: 'John Doe',
+      dateOfBirth: new Date('1950-05-15'),
+      roomNumber: '101A',
+    },
+    {
+      name: 'Jane Smith',
+      dateOfBirth: new Date('1945-10-20'),
+      roomNumber: '102B',
+    },
+    {
+      name: 'Robert Johnson',
+      dateOfBirth: new Date('1955-03-25'),
+      roomNumber: '103C',
+    },
+    {
+      name: 'Mary Williams',
+      dateOfBirth: new Date('1960-12-10'),
+      roomNumber: '104D',
+    },
+    {
+      name: 'David Brown',
+      dateOfBirth: new Date('1952-07-30'),
+      roomNumber: '105E',
+    },
+    {
+      name: 'Elizabeth Davis',
+      dateOfBirth: new Date('1948-11-05'),
+      roomNumber: null, // Testing null room number
+    },
+    {
+      name: 'Binul Maneth',
+      dateOfBirth: new Date('1965-08-22'),
+      roomNumber: '106F',
+    },
+  ];
 
-  console.log(`Created ${patients.length} patients`);
+  const patients = await Promise.all(
+    patientData.map((data) => prisma.patient.create({ data }))
+  );
 
-  // Create dispensers
-  console.log('Creating dispensers...');
+  console.log(`Created ${patients.length} patients:`);
+  patients.forEach((patient, index) => {
+    console.log(
+      `  ${index + 1}. ${patient.name} - Room ${
+        patient.roomNumber || 'Not assigned'
+      }`
+    );
+  });
 
-  // Helper function to create a dispenser with 6 chambers
-  async function createDispenserWithChambers(
-    serialNumber: string,
-    status: string,
-    patientId?: string
-  ) {
-    const dispenser = await prisma.dispenser.create({
-      data: {
-        serialNumber,
-        status: status as any,
-        lastSeen: status === 'ONLINE' ? new Date() : null,
-        patientId: patientId || null,
-      },
-    });
+  // Use the first patient (John Doe) for our single dispenser
+  const patient = patients[0];
 
-    // Create 6 chambers for this dispenser
-    for (let i = 1; i <= 6; i++) {
-      await prisma.chamber.create({
-        data: {
-          dispenserId: dispenser.id,
-          chamberNumber: i,
-        },
-      });
-    }
+  console.log(`Selected patient for dispenser: ${patient.name}`);
 
-    // Create RFID tags (one for patient, one for admin)
-    if (patientId) {
-      await prisma.dispenserRfid.create({
-        data: {
-          dispenserId: dispenser.id,
-          rfidTag: `PATIENT-${serialNumber}`,
-          type: 'PATIENT',
-        },
-      });
-    }
+  // Create one dispenser with 6 chambers
+  console.log('Creating dispenser...');
+  const dispenser = await prisma.dispenser.create({
+    data: {
+      serialNumber: 'DISP001',
+      status: DispenserStatus.OFFLINE,
+      lastSeen: new Date(),
+      patientId: patient.id,
+    },
+  });
 
-    await prisma.dispenserRfid.create({
+  // Create 6 chambers for this dispenser
+  const chambers = [];
+  for (let i = 1; i <= 6; i++) {
+    const chamber = await prisma.chamber.create({
       data: {
         dispenserId: dispenser.id,
-        rfidTag: `ADMIN-${serialNumber}`,
-        type: 'ADMIN',
+        chamberNumber: i,
       },
     });
-
-    return dispenser;
+    chambers.push(chamber);
   }
 
-  // Create dispensers with different statuses and patient assignments
-  const dispenser1 = await createDispenserWithChambers(
-    'DISP001',
-    'ONLINE',
-    patients[0].id
-  );
-  const dispenser2 = await createDispenserWithChambers(
-    'DISP002',
-    'ONLINE',
-    patients[1].id
-  );
-  const dispenser3 = await createDispenserWithChambers(
-    'DISP003',
-    'OFFLINE',
-    patients[2].id
-  );
-  const dispenser4 = await createDispenserWithChambers(
-    'DISP004',
-    'MAINTENANCE',
-    patients[3].id
-  );
-  const dispenser5 = await createDispenserWithChambers(
-    'DISP005',
-    'ERROR',
-    patients[4].id
-  );
-  const dispenser6 = await createDispenserWithChambers(
-    'DISP006',
-    'OFFLINE_AUTONOMOUS',
-    patients[5].id
+  // Create RFID tags
+  await prisma.dispenserRfid.create({
+    data: {
+      dispenserId: dispenser.id,
+      rfidTag: `PATIENT-${dispenser.serialNumber}`,
+      type: RfidType.PATIENT,
+    },
+  });
+
+  await prisma.dispenserRfid.create({
+    data: {
+      dispenserId: dispenser.id,
+      rfidTag: `ADMIN-${dispenser.serialNumber}`,
+      type: RfidType.ADMIN,
+    },
+  });
+
+  console.log(
+    `Created dispenser ${dispenser.serialNumber} with 6 chambers and RFID tags`
   );
 
-  // Create one unassigned dispenser
-  await createDispenserWithChambers('DISP007', 'ONLINE');
+  // Create one schedule with medication assignments
+  console.log('Creating schedule...');
+  const schedule = await prisma.schedule.create({
+    data: {
+      dispenserId: dispenser.id,
+      patientId: patient.id,
+      time: 8, // 8:00 AM
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      isActive: true,
+    },
+  });
 
-  console.log(`Created 7 dispensers with chambers and RFID tags`);
+  // Create chamber content for the schedule
+  // Use chambers 1, 2, and 3 with different medications including common ones
+  const chamberAssignments: ChamberAssignment[] = [
+    {
+      chamberId: chambers[0].id,
+      medicationId: medications[1].id,
+      dosageAmount: 2,
+    }, // Panadol
+    {
+      chamberId: chambers[1].id,
+      medicationId: medications[3].id,
+      dosageAmount: 1,
+    }, // Lisinopril
+    {
+      chamberId: chambers[2].id,
+      medicationId: medications[4].id,
+      dosageAmount: 1,
+    }, // Metformin
+  ];
 
-  // Get all chambers
-  const chambers = await prisma.chamber.findMany();
-
-  // Helper function to group chambers by dispenser
-  const chambersByDispenser = chambers.reduce((acc, chamber) => {
-    if (!acc[chamber.dispenserId]) {
-      acc[chamber.dispenserId] = [];
-    }
-    acc[chamber.dispenserId].push(chamber);
-    return acc;
-  }, {} as Record<string, typeof chambers>);
-
-  // Create schedules with chamber content
-  console.log('Creating schedules and chamber content...');
-
-  // Helper function to create a schedule with medication assignments
-  async function createSchedule(
-    dispenserId: string,
-    patientId: string,
-    time: number,
-    medicationAssignments: Array<{
-      medicationId: string;
-      chamberNumber: number;
-      dosageAmount: number;
-    }>
-  ) {
-    const schedule = await prisma.schedule.create({
+  for (const assignment of chamberAssignments) {
+    await prisma.chamberContent.create({
       data: {
-        dispenserId,
-        patientId,
-        time,
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        isActive: true,
+        chamberId: assignment.chamberId,
+        medicationId: assignment.medicationId,
+        scheduleId: schedule.id,
+        dosageAmount: assignment.dosageAmount,
+        currentAmount: 30, // Starting amount
       },
     });
-
-    // Find dispenser chambers
-    const dispenserChambers = chambersByDispenser[dispenserId];
-
-    // Create chamber content for each medication assignment
-    for (const assignment of medicationAssignments) {
-      const chamber = dispenserChambers.find(
-        (c) => c.chamberNumber === assignment.chamberNumber
-      );
-
-      if (chamber) {
-        await prisma.chamberContent.create({
-          data: {
-            chamberId: chamber.id,
-            medicationId: assignment.medicationId,
-            scheduleId: schedule.id,
-            dosageAmount: assignment.dosageAmount,
-            currentAmount: 30, // Starting amount
-          },
-        });
-      }
-    }
-
-    return schedule;
   }
 
-  // Create schedules for dispenser 1 (multiple times a day)
-  await createSchedule(dispenser1.id, patients[0].id, 8, [
-    { medicationId: medications[0].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[1].id, chamberNumber: 2, dosageAmount: 2 },
-  ]);
+  console.log('Created schedule with medication assignments');
 
-  await createSchedule(dispenser1.id, patients[0].id, 13, [
-    { medicationId: medications[0].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[2].id, chamberNumber: 3, dosageAmount: 1 },
-  ]);
-
-  await createSchedule(dispenser1.id, patients[0].id, 20, [
-    { medicationId: medications[1].id, chamberNumber: 2, dosageAmount: 2 },
-    { medicationId: medications[3].id, chamberNumber: 4, dosageAmount: 1 },
-  ]);
-
-  // Create schedule for dispenser 2
-  await createSchedule(dispenser2.id, patients[1].id, 9, [
-    { medicationId: medications[4].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[5].id, chamberNumber: 2, dosageAmount: 2 },
-  ]);
-
-  await createSchedule(dispenser2.id, patients[1].id, 21, [
-    { medicationId: medications[4].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[6].id, chamberNumber: 3, dosageAmount: 1 },
-  ]);
-
-  // Create schedule for dispenser 3
-  await createSchedule(dispenser3.id, patients[2].id, 10, [
-    { medicationId: medications[7].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[2].id, chamberNumber: 2, dosageAmount: 2 },
-  ]);
-
-  // Create schedule for dispenser 4
-  await createSchedule(dispenser4.id, patients[3].id, 8, [
-    { medicationId: medications[3].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[5].id, chamberNumber: 2, dosageAmount: 1 },
-  ]);
-
-  // Create schedule for dispenser 5
-  await createSchedule(dispenser5.id, patients[4].id, 9, [
-    { medicationId: medications[6].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[0].id, chamberNumber: 2, dosageAmount: 2 },
-  ]);
-
-  // Create schedule for dispenser 6 using all 6 chambers
-  await createSchedule(dispenser6.id, patients[5].id, 10, [
-    { medicationId: medications[0].id, chamberNumber: 1, dosageAmount: 1 },
-    { medicationId: medications[1].id, chamberNumber: 2, dosageAmount: 2 },
-    { medicationId: medications[2].id, chamberNumber: 3, dosageAmount: 1 },
-    { medicationId: medications[3].id, chamberNumber: 4, dosageAmount: 1 },
-    { medicationId: medications[4].id, chamberNumber: 5, dosageAmount: 1 },
-    { medicationId: medications[5].id, chamberNumber: 6, dosageAmount: 2 },
-  ]);
-
-  console.log('Created schedules with chamber content');
-
-  // Create dispenser logs
-  console.log('Creating dispenser logs...');
-
-  // Get all schedules
-  const schedules = await prisma.schedule.findMany();
-
-  // Create some logs for testing
-  const now = new Date();
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+  // Create a few sample dispenser logs
+  console.log('Creating sample logs...');
+  const now: Date = new Date();
+  const yesterday: Date = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const twoDaysAgo: Date = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
 
   // Helper function to create a dispenser log
   async function createDispenserLog(
-    dispenserId: string,
-    scheduleId: string,
     timestamp: Date,
-    status: string,
+    status: DispensingStatus,
     synced: boolean
-  ) {
-    return prisma.dispenserLog.create({
+  ): Promise<void> {
+    await prisma.dispenserLog.create({
       data: {
-        dispenserId,
-        scheduleId,
+        dispenserId: dispenser.id,
+        scheduleId: schedule.id,
         timestamp,
-        status: status as any,
+        status,
         medications: JSON.stringify([
-          { id: medications[0].id, name: medications[0].name, amount: 1 },
-          { id: medications[1].id, name: medications[1].name, amount: 2 },
+          { id: medications[1].id, name: medications[1].name, amount: 2 }, // Panadol
+          { id: medications[3].id, name: medications[3].name, amount: 1 }, // Lisinopril
+          { id: medications[4].id, name: medications[4].name, amount: 1 }, // Metformin
         ]),
         synced,
       },
     });
   }
 
-  // Create logs for dispenser 1
-  await createDispenserLog(
-    dispenser1.id,
-    schedules[0].id,
-    twoDaysAgo,
-    'COMPLETED',
-    true
-  );
-  await createDispenserLog(
-    dispenser1.id,
-    schedules[0].id,
-    yesterday,
-    'COMPLETED',
-    true
-  );
-  await createDispenserLog(
-    dispenser1.id,
-    schedules[0].id,
-    now,
-    'COMPLETED',
-    true
-  );
+  // Create sample logs
+  await createDispenserLog(twoDaysAgo, DispensingStatus.COMPLETED, true);
+  await createDispenserLog(yesterday, DispensingStatus.COMPLETED, true);
+  await createDispenserLog(now, DispensingStatus.COMPLETED, true);
 
-  await createDispenserLog(
-    dispenser1.id,
-    schedules[1].id,
-    twoDaysAgo,
-    'MISSED',
-    true
-  );
-  await createDispenserLog(
-    dispenser1.id,
-    schedules[1].id,
-    yesterday,
-    'COMPLETED',
-    true
-  );
+  console.log('Created sample dispenser logs');
 
-  await createDispenserLog(
-    dispenser1.id,
-    schedules[2].id,
-    twoDaysAgo,
-    'LATE',
-    true
+  console.log('Simplified database seeding completed successfully!');
+  console.log('Summary:');
+  console.log('- 2 admin users created');
+  console.log(
+    `- ${medications.length} medications created (including common ones like Panadol, Ibuprofen)`
   );
-
-  // Create logs for dispenser 2
-  await createDispenserLog(
-    dispenser2.id,
-    schedules[3].id,
-    yesterday,
-    'COMPLETED',
-    true
-  );
-  await createDispenserLog(
-    dispenser2.id,
-    schedules[4].id,
-    yesterday,
-    'COMPLETED',
-    true
-  );
-
-  // Create logs for offline dispensers (not synced)
-  await createDispenserLog(
-    dispenser3.id,
-    schedules[5].id,
-    yesterday,
-    'COMPLETED',
-    false
-  );
-  await createDispenserLog(
-    dispenser6.id,
-    schedules[6].id,
-    yesterday,
-    'ERROR',
-    false
-  );
-
-  console.log('Created dispenser logs');
-
-  console.log('Database seeding completed successfully!');
+  console.log(`- ${patients.length} patients created`);
+  console.log('- 1 dispenser with 6 chambers created (assigned to John Doe)');
+  console.log('- 1 schedule with 3 medication assignments created');
+  console.log('- 3 sample logs created');
 }
 
 main()
-  .catch((e) => {
-    console.error('Error during database seeding:', e);
+  .catch((error: Error) => {
+    console.error('Error during database seeding:', error);
     process.exit(1);
   })
-  .finally(async () => {
+  .finally(async (): Promise<void> => {
     await prisma.$disconnect();
   });
